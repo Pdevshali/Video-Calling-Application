@@ -46,6 +46,7 @@ class HomeActivity : AppCompatActivity() {
         startActivity(Intent(this, MainActivity::class.java))
         }
 
+
         startBtn.setOnClickListener {
             val userID = userIdEditTextView.text.toString().trim()
             if(userID.isEmpty()){

@@ -20,9 +20,10 @@ import com.google.firebase.auth.GoogleAuthProvider
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var auth : FirebaseAuth
-    private lateinit var googleSignInClient : GoogleSignInClient
+    private lateinit var auth: FirebaseAuth
+    private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var loadingProgressBar: ProgressBar
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,30 +43,33 @@ class MainActivity : AppCompatActivity() {
         Btn.setOnClickListener {
             loadingProgressBar.visibility = View.VISIBLE
             signInGoogle()
-            // Perform the button click action
-            performButtonClickAction()
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        checkSignedInStatus()
     }
 
     private fun signInGoogle() {
         val signInIntent = googleSignInClient.signInIntent
         launcher.launch(signInIntent)
     }
-    private val launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
-        result ->
-                if (result.resultCode == Activity.RESULT_OK){
-                    val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                    handleResults(task)
-                }
+
+    private val launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            handleResults(task)
+        }
     }
 
     private fun handleResults(task: Task<GoogleSignInAccount>) {
-        if(task.isSuccessful){
-            val account : GoogleSignInAccount? = task.result
-            if(account!=null){
+        if (task.isSuccessful) {
+            val account: GoogleSignInAccount? = task.result
+            if (account != null) {
                 updateUI(account)
             }
-        }else{
+        } else {
             Toast.makeText(this, task.exception.toString(), Toast.LENGTH_SHORT).show()
         }
     }
@@ -73,14 +77,24 @@ class MainActivity : AppCompatActivity() {
     private fun updateUI(account: GoogleSignInAccount) {
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
         auth.signInWithCredential(credential).addOnCompleteListener {
-            if (it.isSuccessful){
-                val intent : Intent = Intent(this, HomeActivity::class.java)
+            if (it.isSuccessful) {
+                val intent: Intent = Intent(this, HomeActivity::class.java)
                 intent.putExtra("name", account.displayName)
                 startActivity(intent)
-
-            }else{
+            } else {
                 Toast.makeText(this, it.exception.toString(), Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun checkSignedInStatus() {
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        if (account != null && auth.currentUser != null) {
+            // User is already signed in
+            // Proceed to the next activity
+            val intent: Intent = Intent(this, HomeActivity::class.java)
+            intent.putExtra("name", account.displayName)
+            startActivity(intent)
         }
     }
 
